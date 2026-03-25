@@ -11,7 +11,6 @@ function Jobs() {
   const [type, setType] = useState("");
   const [location, setLocation] = useState("");
 
-  // fetch jobs + get role
   useEffect(() => {
     fetchJobs();
 
@@ -27,18 +26,30 @@ function Jobs() {
     }
   }, []);
 
-  // ✅ FIXED fetch with error handling
+  // ✅ FIXED fetch (handles all response formats)
   const fetchJobs = async () => {
     try {
       const res = await axios.get(`${API}/api/jobs`);
-      console.log("Jobs data:", res.data); // 🔥 debug
-      setJobs(res.data);
+
+      console.log("API RESPONSE:", res.data); // 🔥 DEBUG
+
+      // 🔥 HANDLE ALL CASES
+      if (Array.isArray(res.data)) {
+        setJobs(res.data);
+      } else if (res.data.rows) {
+        setJobs(res.data.rows);
+      } else if (res.data.data) {
+        setJobs(res.data.data);
+      } else {
+        setJobs([]);
+      }
     } catch (err) {
       console.error("Error fetching jobs:", err);
+      setJobs([]);
     }
   };
 
-  // apply job
+  // APPLY JOB
   const apply = async (id) => {
     try {
       const token = localStorage.getItem("token");
@@ -59,7 +70,7 @@ function Jobs() {
     }
   };
 
-  // delete job
+  // DELETE JOB
   const deleteJob = async (id) => {
     try {
       const token = localStorage.getItem("token");
@@ -77,7 +88,7 @@ function Jobs() {
     }
   };
 
-  // create job
+  // CREATE JOB
   const createJob = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -114,16 +125,32 @@ function Jobs() {
         <div style={{ border: "2px solid green", padding: "10px", margin: "10px" }}>
           <h3>Create Job</h3>
 
-          <input placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} />
+          <input
+            placeholder="Company"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+          />
           <br />
 
-          <input placeholder="Position" value={position} onChange={(e) => setPosition(e.target.value)} />
+          <input
+            placeholder="Position"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+          />
           <br />
 
-          <input placeholder="Type" value={type} onChange={(e) => setType(e.target.value)} />
+          <input
+            placeholder="Type"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          />
           <br />
 
-          <input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
+          <input
+            placeholder="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
           <br />
 
           <button onClick={createJob}>Create Job</button>
@@ -135,7 +162,10 @@ function Jobs() {
         <p>No jobs available</p>
       ) : (
         jobs.map((job) => (
-          <div key={job.id} style={{ border: "1px solid black", padding: "10px", margin: "10px" }}>
+          <div
+            key={job.id}
+            style={{ border: "1px solid black", padding: "10px", margin: "10px" }}
+          >
             <p>
               {job.company || "Company"} - {job.position || "Role"}
             </p>
@@ -143,7 +173,10 @@ function Jobs() {
             <button onClick={() => apply(job.id)}>Apply</button>
 
             {role === "admin" && (
-              <button onClick={() => deleteJob(job.id)} style={{ marginLeft: "10px" }}>
+              <button
+                onClick={() => deleteJob(job.id)}
+                style={{ marginLeft: "10px" }}
+              >
                 Delete
               </button>
             )}
