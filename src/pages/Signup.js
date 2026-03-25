@@ -7,10 +7,16 @@ function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const navigate = useNavigate(); // ✅ for redirect
+  const navigate = useNavigate();
 
   const handleSignup = async () => {
     try {
+      // 🔴 validation
+      if (!email || !password) {
+        alert("Please enter email and password");
+        return;
+      }
+
       await axios.post(`${API}/api/auth/signup`, {
         email,
         password,
@@ -18,11 +24,18 @@ function Signup() {
 
       alert("Signup successful ✅");
 
-      // 👉 redirect to login page
+      // ✅ redirect to login
       navigate("/login");
+
     } catch (error) {
-      alert("Signup failed ❌");
       console.error(error);
+
+      // ✅ show proper backend error
+      if (error.response && error.response.data.error) {
+        alert(error.response.data.error);
+      } else {
+        alert("Signup failed ❌");
+      }
     }
   };
 

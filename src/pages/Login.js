@@ -5,22 +5,59 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const res = await axios.post("http://localhost:5000/api/auth/login", {
-      email,
-      password,
-    });
+    try {
+      const res = await axios.post(
+        "https://job-backend-1-6lf2.onrender.com/api/auth/login", // ✅ use deployed URL
+        {
+          email,
+          password,
+        }
+      );
 
-    localStorage.setItem("token", res.data.token);
-    alert("Login successful");
+      // ✅ store token
+      localStorage.setItem("token", res.data.token);
+
+      alert("Login successful");
+
+      // ✅ redirect based on role (IMPORTANT)
+      if (res.data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/jobs");
+      }
+
+    } catch (err) {
+      console.error(err);
+
+      // ✅ show proper error message
+      if (err.response && err.response.data.error) {
+        alert(err.response.data.error);
+      } else {
+        alert("Login failed");
+      }
+    }
   };
 
   return (
     <div>
       <h2>Login</h2>
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input placeholder="Password" type="password" onChange={(e) => setPassword(e.target.value)} />
+
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <input
+        placeholder="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
       <button onClick={handleLogin}>Login</button>
     </div>
   );
