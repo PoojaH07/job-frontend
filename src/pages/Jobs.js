@@ -18,108 +18,112 @@ function Jobs() {
     const token = localStorage.getItem("token");
 
     if (token) {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setRole(payload.role);
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setRole(payload.role);
+      } catch (err) {
+        console.error("Token decode error:", err);
+      }
     }
   }, []);
 
-  // reusable fetch
+  // ✅ FIXED fetch with error handling
   const fetchJobs = async () => {
-    const res = await axios.get(`${API}/api/jobs`);
-    setJobs(res.data);
+    try {
+      const res = await axios.get(`${API}/api/jobs`);
+      console.log("Jobs data:", res.data); // 🔥 debug
+      setJobs(res.data);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+    }
   };
 
   // apply job
   const apply = async (id) => {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    await axios.post(
-      `${API}/api/jobs/${id}/apply`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      await axios.post(
+        `${API}/api/jobs/${id}/apply`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    alert("Applied!");
+      alert("Applied!");
+    } catch (err) {
+      console.error("Apply error:", err);
+    }
   };
 
-  // delete job (admin)
+  // delete job
   const deleteJob = async (id) => {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    await axios.delete(`${API}/api/jobs/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    alert("Job deleted!");
-    fetchJobs();
-  };
-
-  // create job (admin)
-  const createJob = async () => {
-    const token = localStorage.getItem("token");
-
-    await axios.post(
-      `${API}/api/jobs`,
-      { company, position, type, location },
-      {
+      await axios.delete(`${API}/api/jobs/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
 
-    alert("Job created!");
+      alert("Job deleted!");
+      fetchJobs();
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
 
-    // clear inputs
-    setCompany("");
-    setPosition("");
-    setType("");
-    setLocation("");
+  // create job
+  const createJob = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-    fetchJobs();
+      await axios.post(
+        `${API}/api/jobs`,
+        { company, position, type, location },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Job created!");
+
+      setCompany("");
+      setPosition("");
+      setType("");
+      setLocation("");
+
+      fetchJobs();
+    } catch (err) {
+      console.error("Create job error:", err);
+    }
   };
 
   return (
     <div>
       <h2>Jobs</h2>
 
-      {/* ADMIN CREATE JOB FORM */}
+      {/* ADMIN CREATE JOB */}
       {role === "admin" && (
         <div style={{ border: "2px solid green", padding: "10px", margin: "10px" }}>
           <h3>Create Job</h3>
 
-          <input
-            placeholder="Company"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-          />
+          <input placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} />
           <br />
 
-          <input
-            placeholder="Position"
-            value={position}
-            onChange={(e) => setPosition(e.target.value)}
-          />
+          <input placeholder="Position" value={position} onChange={(e) => setPosition(e.target.value)} />
           <br />
 
-          <input
-            placeholder="Type"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          />
+          <input placeholder="Type" value={type} onChange={(e) => setType(e.target.value)} />
           <br />
 
-          <input
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
+          <input placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} />
           <br />
 
           <button onClick={createJob}>Create Job</button>
@@ -127,28 +131,25 @@ function Jobs() {
       )}
 
       {/* JOB LIST */}
-      {jobs.map((job) => (
-        <div
-          key={job.id}
-          style={{ border: "1px solid black", padding: "10px", margin: "10px" }}
-        >
-          <p>
-            {job.company || "Company"} - {job.position || "Role"}
-          </p>
+      {jobs.length === 0 ? (
+        <p>No jobs available</p>
+      ) : (
+        jobs.map((job) => (
+          <div key={job.id} style={{ border: "1px solid black", padding: "10px", margin: "10px" }}>
+            <p>
+              {job.company || "Company"} - {job.position || "Role"}
+            </p>
 
-          <button onClick={() => apply(job.id)}>Apply</button>
+            <button onClick={() => apply(job.id)}>Apply</button>
 
-          {/* DELETE BUTTON FOR ADMIN */}
-          {role === "admin" && (
-            <button
-              onClick={() => deleteJob(job.id)}
-              style={{ marginLeft: "10px" }}
-            >
-              Delete
-            </button>
-          )}
-        </div>
-      ))}
+            {role === "admin" && (
+              <button onClick={() => deleteJob(job.id)} style={{ marginLeft: "10px" }}>
+                Delete
+              </button>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }
