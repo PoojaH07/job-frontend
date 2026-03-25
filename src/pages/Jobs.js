@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import API from "../api";
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -12,9 +13,7 @@ function Jobs() {
 
   // fetch jobs + get role
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/jobs")
-      .then((res) => setJobs(res.data));
+    fetchJobs();
 
     const token = localStorage.getItem("token");
 
@@ -24,12 +23,18 @@ function Jobs() {
     }
   }, []);
 
+  // reusable fetch
+  const fetchJobs = async () => {
+    const res = await axios.get(`${API}/api/jobs`);
+    setJobs(res.data);
+  };
+
   // apply job
   const apply = async (id) => {
     const token = localStorage.getItem("token");
 
     await axios.post(
-      `http://localhost:5000/api/jobs/${id}/apply`,
+      `${API}/api/jobs/${id}/apply`,
       {},
       {
         headers: {
@@ -41,23 +46,18 @@ function Jobs() {
     alert("Applied!");
   };
 
+  // delete job (admin)
   const deleteJob = async (id) => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  await axios.delete(
-    `http://localhost:5000/api/jobs/${id}`,
-    {
+    await axios.delete(`${API}/api/jobs/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-    }
-  );
+    });
 
-  alert("Job deleted!");
-
-  // reload jobs
-  const res = await axios.get("http://localhost:5000/api/jobs");
-  setJobs(res.data);
+    alert("Job deleted!");
+    fetchJobs();
   };
 
   // create job (admin)
@@ -65,7 +65,7 @@ function Jobs() {
     const token = localStorage.getItem("token");
 
     await axios.post(
-      "http://localhost:5000/api/jobs",
+      `${API}/api/jobs`,
       { company, position, type, location },
       {
         headers: {
@@ -76,9 +76,13 @@ function Jobs() {
 
     alert("Job created!");
 
-    // reload jobs
-    const res = await axios.get("http://localhost:5000/api/jobs");
-    setJobs(res.data);
+    // clear inputs
+    setCompany("");
+    setPosition("");
+    setType("");
+    setLocation("");
+
+    fetchJobs();
   };
 
   return (
@@ -90,13 +94,32 @@ function Jobs() {
         <div style={{ border: "2px solid green", padding: "10px", margin: "10px" }}>
           <h3>Create Job</h3>
 
-          <input placeholder="Company" onChange={(e) => setCompany(e.target.value)} />
+          <input
+            placeholder="Company"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+          />
           <br />
-          <input placeholder="Position" onChange={(e) => setPosition(e.target.value)} />
+
+          <input
+            placeholder="Position"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+          />
           <br />
-          <input placeholder="Type" onChange={(e) => setType(e.target.value)} />
+
+          <input
+            placeholder="Type"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          />
           <br />
-          <input placeholder="Location" onChange={(e) => setLocation(e.target.value)} />
+
+          <input
+            placeholder="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
           <br />
 
           <button onClick={createJob}>Create Job</button>
@@ -114,6 +137,16 @@ function Jobs() {
           </p>
 
           <button onClick={() => apply(job.id)}>Apply</button>
+
+          {/* DELETE BUTTON FOR ADMIN */}
+          {role === "admin" && (
+            <button
+              onClick={() => deleteJob(job.id)}
+              style={{ marginLeft: "10px" }}
+            >
+              Delete
+            </button>
+          )}
         </div>
       ))}
     </div>
